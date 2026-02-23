@@ -74,15 +74,15 @@ export default async function DashboardPage() {
               const story = storyMap.get(session.story_id)
               const scene = sceneMap.get(session.current_scene_id)
               return (
-                <Card key={session.id} className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
+                <Card key={session.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
                       <BookOpen className="h-5 w-5 text-indigo-600" />
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{story?.title ?? 'Histoire'}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-gray-900">{story?.title ?? 'Histoire'}</p>
                       {scene && (
-                        <p className="text-xs font-medium text-indigo-600">
+                        <p className="truncate text-xs font-medium text-indigo-600">
                           Scène : {scene.title}
                         </p>
                       )}
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-2 flex-wrap">
                     <Badge variant="info">En cours</Badge>
                     <Link href={`/play/${session.id}`}>
                       <Button size="sm">
@@ -130,15 +130,11 @@ export default async function DashboardPage() {
               const isVictory = endingType === 'victory'
               const isDefeat = endingType === 'defeat'
               return (
-                <Card key={session.id} className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
+                <Card key={session.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                        isVictory
-                          ? 'bg-green-100'
-                          : isDefeat
-                          ? 'bg-red-100'
-                          : 'bg-gray-100'
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                        isVictory ? 'bg-green-100' : isDefeat ? 'bg-red-100' : 'bg-gray-100'
                       }`}
                     >
                       {isVictory ? (
@@ -149,14 +145,14 @@ export default async function DashboardPage() {
                         <BookOpen className="h-5 w-5 text-gray-500" />
                       )}
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{story?.title ?? 'Histoire'}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-gray-900">{story?.title ?? 'Histoire'}</p>
                       <p className="text-xs text-gray-500">
                         Terminée le {formatDate(session.completed_at ?? session.updated_at)}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-2 flex-wrap">
                     {isVictory && <Badge variant="success">Victoire</Badge>}
                     {isDefeat && <Badge variant="danger">Échec</Badge>}
                     {!isVictory && !isDefeat && <Badge variant="default">Terminée</Badge>}
