@@ -75,6 +75,7 @@ export interface Database {
           ending_type: 'victory' | 'defeat' | 'neutral' | null
           keywords: string[]
           required_keywords: string[]
+          item_keywords: string[]
           position_x: number
           position_y: number
           created_at: string
@@ -90,6 +91,7 @@ export interface Database {
           ending_type?: 'victory' | 'defeat' | 'neutral' | null
           keywords?: string[]
           required_keywords?: string[]
+          item_keywords?: string[]
           position_x?: number
           position_y?: number
           created_at?: string
@@ -105,6 +107,7 @@ export interface Database {
           ending_type?: 'victory' | 'defeat' | 'neutral' | null
           keywords?: string[]
           required_keywords?: string[]
+          item_keywords?: string[]
           position_x?: number
           position_y?: number
           updated_at?: string
@@ -148,6 +151,7 @@ export interface Database {
           current_scene_id: string
           status: 'active' | 'completed' | 'abandoned'
           journal: string[]
+          items: string[]
           started_at: string
           completed_at: string | null
           updated_at: string
@@ -159,6 +163,7 @@ export interface Database {
           current_scene_id: string
           status?: 'active' | 'completed' | 'abandoned'
           journal?: string[]
+          items?: string[]
           started_at?: string
           completed_at?: string | null
           updated_at?: string
@@ -170,6 +175,7 @@ export interface Database {
           current_scene_id?: string
           status?: 'active' | 'completed' | 'abandoned'
           journal?: string[]
+          items?: string[]
           started_at?: string
           completed_at?: string | null
           updated_at?: string

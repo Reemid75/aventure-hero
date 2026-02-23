@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { SceneDisplay } from '@/components/game/SceneDisplay'
 import { ChoiceList } from '@/components/game/ChoiceList'
 import { GameProgress } from '@/components/game/GameProgress'
+import { CollectItemButton } from '@/components/game/CollectItemButton'
+import { JournalModal } from '@/components/game/JournalModal'
 import { Card } from '@/components/ui/Card'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -21,7 +23,7 @@ export default async function PlayPage({ params }: Props) {
 
   const { data: session } = await supabase
     .from('game_sessions')
-    .select('id, player_id, story_id, current_scene_id, status, journal, started_at, completed_at, updated_at')
+    .select('id, player_id, story_id, current_scene_id, status, journal, items, started_at, completed_at, updated_at')
     .eq('id', sessionId)
     .eq('player_id', user.id)
     .single()
@@ -31,7 +33,7 @@ export default async function PlayPage({ params }: Props) {
 
   const [{ data: story }, { data: scene }, { count: visitCount }] = await Promise.all([
     supabase.from('stories').select('id, title, description, author_id, is_published, cover_image, created_at, updated_at').eq('id', session.story_id).single(),
-    supabase.from('scenes').select('id, story_id, title, content, is_start, is_ending, ending_type, keywords, required_keywords, position_x, position_y, created_at, updated_at').eq('id', session.current_scene_id).single(),
+    supabase.from('scenes').select('id, story_id, title, content, is_start, is_ending, ending_type, keywords, required_keywords, item_keywords, position_x, position_y, created_at, updated_at').eq('id', session.current_scene_id).single(),
     supabase.from('scene_visits').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
   ])
 
@@ -55,14 +57,17 @@ export default async function PlayPage({ params }: Props) {
 
   const sceneWithChoices: SceneWithChoices = { ...scene, choices: choices ?? [] }
   const journal: string[] = session.journal ?? []
+  const items: string[] = session.items ?? []
+  const itemKeywords: string[] = scene.item_keywords ?? []
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2">
         <Link href="/stories" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft className="h-4 w-4" />
           Histoires
         </Link>
+        <JournalModal items={items} journal={journal} sessionId={sessionId} />
       </div>
 
       <GameProgress session={session} story={story as Story} visitCount={visitCount ?? 0} />
@@ -71,17 +76,34 @@ export default async function PlayPage({ params }: Props) {
         <SceneDisplay scene={sceneWithChoices} />
       </Card>
 
-      {/* Afficher le journal si non vide */}
+      {/* Items à ramasser sur cette scène */}
+      {itemKeywords.length > 0 && (
+        <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+            Items disponibles
+          </p>
+          {itemKeywords.map((item) => (
+            <CollectItemButton
+              key={item}
+              sessionId={sessionId}
+              item={item}
+              collected={items.includes(item)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Mots-clés automatiques du journal */}
       {journal.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
-            Journal
+        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Ajouté au journal
           </p>
           <div className="flex flex-wrap gap-1.5">
             {journal.map((kw) => (
               <span
                 key={kw}
-                className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800"
+                className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-700"
               >
                 {kw}
               </span>
@@ -94,7 +116,7 @@ export default async function PlayPage({ params }: Props) {
         <ChoiceList
           choices={choices ?? []}
           sessionId={sessionId}
-          journal={journal}
+          journal={[...journal, ...items]}
           sceneRequirements={sceneRequirements}
         />
       )}

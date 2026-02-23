@@ -43,8 +43,9 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
           ending_type: scene.ending_type ?? null,
           keywords_raw: keywordsToRaw(scene.keywords),
           required_keywords_raw: keywordsToRaw(scene.required_keywords),
+          item_keywords_raw: keywordsToRaw(scene.item_keywords),
         }
-      : { is_start: false, is_ending: false, keywords_raw: '', required_keywords_raw: '' },
+      : { is_start: false, is_ending: false, keywords_raw: '', required_keywords_raw: '', item_keywords_raw: '' },
   })
 
   useEffect(() => {
@@ -57,9 +58,10 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
         ending_type: scene.ending_type ?? null,
         keywords_raw: keywordsToRaw(scene.keywords),
         required_keywords_raw: keywordsToRaw(scene.required_keywords),
+        item_keywords_raw: keywordsToRaw(scene.item_keywords),
       })
     } else {
-      reset({ is_start: false, is_ending: false, keywords_raw: '', required_keywords_raw: '' })
+      reset({ is_start: false, is_ending: false, keywords_raw: '', required_keywords_raw: '', item_keywords_raw: '' })
     }
   }, [scene, reset])
 
@@ -72,6 +74,7 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
     const endingType = data.is_ending ? (data.ending_type ?? 'neutral') : null
     const keywords = parseKeywords(data.keywords_raw)
     const required_keywords = parseKeywords(data.required_keywords_raw)
+    const item_keywords = parseKeywords(data.item_keywords_raw)
 
     const payload = {
       title: data.title,
@@ -81,6 +84,7 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
       ending_type: endingType,
       keywords,
       required_keywords,
+      item_keywords,
     }
 
     if (scene) {
@@ -174,14 +178,19 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
       <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Journal</p>
         <Input
-          label="Mots-clés ajoutés au journal"
-          hint="Séparés par des virgules — ex : clé_grenier, lettre_rouge"
+          label="Mots-clés ajoutés automatiquement"
+          hint="Séparés par des virgules — ajoutés au journal dès que le joueur visite la scène"
           {...register('keywords_raw')}
         />
         <Input
           label="Mots-clés requis pour accéder"
-          hint="Le joueur doit posséder tous ces mots-clés dans son journal"
+          hint="Le joueur doit posséder tous ces mots-clés (journal ou inventaire) pour accéder à la scène"
           {...register('required_keywords_raw')}
+        />
+        <Input
+          label="Items à ramasser"
+          hint="Séparés par des virgules — le joueur peut choisir de les ajouter à son inventaire"
+          {...register('item_keywords_raw')}
         />
       </div>
 

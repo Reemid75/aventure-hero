@@ -15,6 +15,7 @@ export const sceneSchema = z.object({
   /** Saisie libre séparée par des virgules, convertie en tableau lors de la soumission */
   keywords_raw: z.string().optional(),
   required_keywords_raw: z.string().optional(),
+  item_keywords_raw: z.string().optional(),
 })
 
 /** Parse une chaîne "mot1, mot2, mot3" en tableau de mots-clés nettoyés */

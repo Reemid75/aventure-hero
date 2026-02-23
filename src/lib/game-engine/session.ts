@@ -7,15 +7,16 @@ export async function startOrResumeSession(
 ): Promise<StartSessionResult & { error?: string }> {
   const supabase = await createClient()
 
-  // Chercher une session active existante
+  // Chercher une session ACTIVE existante pour cette histoire
   const { data: existing } = await supabase
     .from('game_sessions')
-    .select('id, status')
+    .select('id')
     .eq('player_id', playerId)
     .eq('story_id', storyId)
-    .single()
+    .eq('status', 'active')
+    .maybeSingle()
 
-  if (existing && existing.status === 'active') {
+  if (existing) {
     return { sessionId: existing.id, isNew: false }
   }
 
@@ -31,21 +32,17 @@ export async function startOrResumeSession(
     return { sessionId: '', isNew: false, error: 'Aucune scène de départ trouvée' }
   }
 
-  // Créer ou réinitialiser la session avec le journal pré-rempli des keywords de départ
+  // Créer une nouvelle session (les sessions terminées sont conservées)
   const { data: session, error: sessionError } = await supabase
     .from('game_sessions')
-    .upsert(
-      {
-        player_id: playerId,
-        story_id: storyId,
-        current_scene_id: startScene.id,
-        status: 'active',
-        journal: startScene.keywords ?? [],
-        started_at: new Date().toISOString(),
-        completed_at: null,
-      },
-      { onConflict: 'player_id,story_id' }
-    )
+    .insert({
+      player_id: playerId,
+      story_id: storyId,
+      current_scene_id: startScene.id,
+      status: 'active',
+      journal: startScene.keywords ?? [],
+      items: [],
+    })
     .select('id')
     .single()
 

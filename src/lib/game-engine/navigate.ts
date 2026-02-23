@@ -11,7 +11,7 @@ export async function navigate(
   // Charger la session et vérifier l'ownership
   const { data: session, error: sessionError } = await supabase
     .from('game_sessions')
-    .select('id, player_id, story_id, current_scene_id, status, journal, started_at, completed_at, updated_at')
+    .select('id, player_id, story_id, current_scene_id, status, journal, items, started_at, completed_at, updated_at')
     .eq('id', sessionId)
     .eq('player_id', playerId)
     .eq('status', 'active')
@@ -44,9 +44,11 @@ export async function navigate(
     return { session: null as never, scene: null as never, isEnding: false, error: 'Scène de destination introuvable' }
   }
 
-  // Vérifier que le joueur possède tous les mots-clés requis
+  // Vérifier que le joueur possède tous les mots-clés requis (journal auto + items collectés)
   const journal: string[] = session.journal ?? []
-  const missing = (nextScene.required_keywords ?? []).filter((kw) => !journal.includes(kw))
+  const items: string[] = session.items ?? []
+  const allCollected = new Set([...journal, ...items])
+  const missing = (nextScene.required_keywords ?? []).filter((kw) => !allCollected.has(kw))
   if (missing.length > 0) {
     return {
       session: null as never,
@@ -71,7 +73,7 @@ export async function navigate(
       completed_at: isEnding ? new Date().toISOString() : null,
     })
     .eq('id', sessionId)
-    .select('id, player_id, story_id, current_scene_id, status, journal, started_at, completed_at, updated_at')
+    .select('id, player_id, story_id, current_scene_id, status, journal, items, started_at, completed_at, updated_at')
     .single()
 
   if (updateError || !updatedSession) {
