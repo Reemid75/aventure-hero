@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, Eye, PenLine } from 'lucide-react'
+import { BookOpen, Eye, PenLine, Users } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
@@ -18,6 +18,7 @@ export default async function AdminDashboardPage() {
     { count: totalStories },
     { count: publishedStories },
     { count: totalSessions },
+    { count: totalPlayers },
   ] = await Promise.all([
     supabase
       .from('stories')
@@ -30,13 +31,18 @@ export default async function AdminDashboardPage() {
       .eq('is_published', true),
     supabase
       .from('game_sessions')
-      .select('*, story:stories!inner(author_id)', { count: 'exact', head: true }),
+      .select('*', { count: 'exact', head: true }),
+    supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'player'),
   ])
 
   const stats = [
     { label: 'Histoires créées', value: totalStories ?? 0, icon: BookOpen },
     { label: 'Histoires publiées', value: publishedStories ?? 0, icon: Eye },
     { label: 'Parties jouées', value: totalSessions ?? 0, icon: PenLine },
+    { label: 'Joueurs inscrits', value: totalPlayers ?? 0, icon: Users },
   ]
 
   return (
@@ -46,7 +52,7 @@ export default async function AdminDashboardPage() {
         <p className="mt-1 text-gray-500">Gérez vos histoires et suivez les statistiques.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(({ label, value, icon: Icon }) => (
           <Card key={label}>
             <div className="flex items-center gap-4">
@@ -62,7 +68,7 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Link href="/admin/stories">
           <Button>
             <BookOpen className="h-4 w-4" />
@@ -73,6 +79,12 @@ export default async function AdminDashboardPage() {
           <Button variant="outline">
             <PenLine className="h-4 w-4" />
             Nouvelle histoire
+          </Button>
+        </Link>
+        <Link href="/admin/players">
+          <Button variant="outline">
+            <Users className="h-4 w-4" />
+            Voir les joueurs
           </Button>
         </Link>
       </div>

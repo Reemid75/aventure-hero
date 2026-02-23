@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, LayoutDashboard, LogOut, Settings } from 'lucide-react'
+import { BookOpen, LayoutDashboard, LogOut, Settings, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -14,6 +14,7 @@ export function AdminSidebar() {
   const links = [
     { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
     { href: '/admin/stories', label: 'Histoires', icon: BookOpen },
+    { href: '/admin/players', label: 'Joueurs', icon: Users },
   ]
 
   async function handleLogout() {

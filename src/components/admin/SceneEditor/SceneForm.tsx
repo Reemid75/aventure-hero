@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Trash2 } from 'lucide-react'
+import { ImagePlus, Trash2, X } from 'lucide-react'
 import { sceneSchema, parseKeywords, type SceneInput } from '@/lib/validations/scene'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
@@ -25,12 +25,16 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
   const supabase = createClient()
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<SceneInput>({
     resolver: zodResolver(sceneSchema) as never,
@@ -41,11 +45,12 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
           is_start: scene.is_start,
           is_ending: scene.is_ending,
           ending_type: scene.ending_type ?? null,
+          visual_url: scene.visual_url ?? '',
           keywords_raw: keywordsToRaw(scene.keywords),
           required_keywords_raw: keywordsToRaw(scene.required_keywords),
           item_keywords_raw: keywordsToRaw(scene.item_keywords),
         }
-      : { is_start: false, is_ending: false, keywords_raw: '', required_keywords_raw: '', item_keywords_raw: '' },
+      : { is_start: false, is_ending: false, visual_url: '', keywords_raw: '', required_keywords_raw: '', item_keywords_raw: '' },
   })
 
   useEffect(() => {
@@ -56,16 +61,54 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
         is_start: scene.is_start,
         is_ending: scene.is_ending,
         ending_type: scene.ending_type ?? null,
+        visual_url: scene.visual_url ?? '',
         keywords_raw: keywordsToRaw(scene.keywords),
         required_keywords_raw: keywordsToRaw(scene.required_keywords),
         item_keywords_raw: keywordsToRaw(scene.item_keywords),
       })
     } else {
-      reset({ is_start: false, is_ending: false, keywords_raw: '', required_keywords_raw: '', item_keywords_raw: '' })
+      reset({ is_start: false, is_ending: false, visual_url: '', keywords_raw: '', required_keywords_raw: '', item_keywords_raw: '' })
     }
   }, [scene, reset])
 
   const isEnding = watch('is_ending')
+  const visualUrl = watch('visual_url')
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setImageError(null)
+    setImageUploading(true)
+
+    const ext = file.name.split('.').pop() ?? 'jpg'
+    const path = `${crypto.randomUUID()}.${ext}`
+
+    const { data, error } = await supabase.storage
+      .from('scene-visuals')
+      .upload(path, file, { upsert: true })
+
+    if (error || !data) {
+      setImageError(`Erreur upload : ${error?.message ?? 'inconnue'}`)
+      setImageUploading(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('scene-visuals')
+      .getPublicUrl(data.path)
+
+    setValue('visual_url', publicUrl, { shouldDirty: true })
+    setImageUploading(false)
+
+    // Reset le file input pour permettre de re-sélectionner le même fichier
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  function removeVisual() {
+    setValue('visual_url', '', { shouldDirty: true })
+    setImageError(null)
+  }
 
   async function onSubmit(data: SceneInput) {
     setSaveError(null)
@@ -82,6 +125,7 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
       is_start: data.is_start ?? false,
       is_ending: data.is_ending ?? false,
       ending_type: endingType,
+      visual_url: data.visual_url?.trim() || null,
       keywords,
       required_keywords,
       item_keywords,
@@ -173,6 +217,62 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
           </select>
         </div>
       )}
+
+      {/* Visuel */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-700">Visuel (facultatif)</label>
+
+        {visualUrl?.trim() ? (
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={visualUrl.trim()}
+              alt="Visuel de la scène"
+              className="max-h-48 w-full rounded-lg object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+            <button
+              type="button"
+              onClick={removeVisual}
+              className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+              title="Supprimer le visuel"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={imageUploading}
+              className="mt-2 flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <ImagePlus className="h-3.5 w-3.5" />
+              {imageUploading ? 'Chargement…' : 'Remplacer'}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={imageUploading}
+            className="flex h-24 w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 text-sm text-gray-500 hover:border-indigo-400 hover:text-indigo-600 disabled:opacity-50"
+          >
+            <ImagePlus className="h-5 w-5" />
+            {imageUploading ? 'Chargement…' : 'Choisir une image'}
+          </button>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageUpload}
+        />
+
+        {imageError && (
+          <p className="text-xs text-red-600">{imageError}</p>
+        )}
+      </div>
 
       {/* Section Journal */}
       <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">

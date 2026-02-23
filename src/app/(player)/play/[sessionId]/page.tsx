@@ -33,7 +33,7 @@ export default async function PlayPage({ params }: Props) {
 
   const [{ data: story }, { data: scene }, { count: visitCount }] = await Promise.all([
     supabase.from('stories').select('id, title, description, author_id, is_published, cover_image, created_at, updated_at').eq('id', session.story_id).single(),
-    supabase.from('scenes').select('id, story_id, title, content, is_start, is_ending, ending_type, keywords, required_keywords, item_keywords, position_x, position_y, created_at, updated_at').eq('id', session.current_scene_id).single(),
+    supabase.from('scenes').select('id, story_id, title, content, is_start, is_ending, ending_type, keywords, required_keywords, item_keywords, visual_url, position_x, position_y, created_at, updated_at').eq('id', session.current_scene_id).single(),
     supabase.from('scene_visits').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
   ])
 
@@ -72,7 +72,7 @@ export default async function PlayPage({ params }: Props) {
 
       <GameProgress session={session} story={story as Story} visitCount={visitCount ?? 0} />
 
-      <Card>
+      <Card padding="none">
         <SceneDisplay scene={sceneWithChoices} />
       </Card>
 

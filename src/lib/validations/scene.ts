@@ -12,6 +12,8 @@ export const sceneSchema = z.object({
     .enum(['victory', 'defeat', 'neutral'])
     .nullable()
     .optional(),
+  /** URL du visuel facultatif de la scène */
+  visual_url: z.string().optional(),
   /** Saisie libre séparée par des virgules, convertie en tableau lors de la soumission */
   keywords_raw: z.string().optional(),
   required_keywords_raw: z.string().optional(),

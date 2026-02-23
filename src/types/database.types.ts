@@ -76,6 +76,7 @@ export interface Database {
           keywords: string[]
           required_keywords: string[]
           item_keywords: string[]
+          visual_url: string | null
           position_x: number
           position_y: number
           created_at: string
@@ -92,6 +93,7 @@ export interface Database {
           keywords?: string[]
           required_keywords?: string[]
           item_keywords?: string[]
+          visual_url?: string | null
           position_x?: number
           position_y?: number
           created_at?: string
@@ -108,6 +110,7 @@ export interface Database {
           keywords?: string[]
           required_keywords?: string[]
           item_keywords?: string[]
+          visual_url?: string | null
           position_x?: number
           position_y?: number
           updated_at?: string
