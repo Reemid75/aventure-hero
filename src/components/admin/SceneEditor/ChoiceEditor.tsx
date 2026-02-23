@@ -70,11 +70,21 @@ export function ChoiceEditor({
 
   async function deleteChoice(id: string) {
     setDeletingId(id)
-    const { error } = await supabase.from('choices').delete().eq('id', id)
+    const { data, error } = await supabase
+      .from('choices')
+      .delete()
+      .eq('id', id)
+      .select('id')
     setDeletingId(null)
-    if (!error) {
-      onChoicesChange(choices.filter((c) => c.id !== id))
+    if (error) {
+      alert(`Erreur lors de la suppression : ${error.message}`)
+      return
     }
+    if (!data?.length) {
+      alert('Impossible de supprimer ce choix (accès refusé).')
+      return
+    }
+    onChoicesChange(choices.filter((c) => c.id !== id))
   }
 
   async function addChoice() {

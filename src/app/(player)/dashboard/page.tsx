@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { StopSessionButton } from '@/components/game/StopSessionButton'
 import { BookOpen, Play } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import type { Story } from '@/types/game.types'
@@ -112,6 +113,7 @@ export default async function DashboardPage() {
                         </Button>
                       </Link>
                     )}
+                    <StopSessionButton sessionId={session.id} />
                   </div>
                 </Card>
               )

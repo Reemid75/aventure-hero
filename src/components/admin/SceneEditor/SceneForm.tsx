@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Trash2 } from 'lucide-react'
@@ -23,6 +23,8 @@ function keywordsToRaw(kws: string[] | undefined): string {
 
 export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps) {
   const supabase = createClient()
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   const {
     register,
@@ -64,6 +66,9 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
   const isEnding = watch('is_ending')
 
   async function onSubmit(data: SceneInput) {
+    setSaveError(null)
+    setSaveSuccess(false)
+
     const endingType = data.is_ending ? (data.ending_type ?? 'neutral') : null
     const keywords = parseKeywords(data.keywords_raw)
     const required_keywords = parseKeywords(data.required_keywords_raw)
@@ -79,19 +84,31 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
     }
 
     if (scene) {
-      const { data: updated } = await supabase
+      const { data: updated, error } = await supabase
         .from('scenes')
         .update(payload)
         .eq('id', scene.id)
         .select()
         .single()
-      if (updated) onSaved(updated)
+      if (error) {
+        setSaveError(error.message)
+        return
+      }
+      if (updated) {
+        onSaved(updated)
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 2000)
+      }
     } else {
-      const { data: created } = await supabase
+      const { data: created, error } = await supabase
         .from('scenes')
         .insert({ story_id: storyId, ...payload })
         .select()
         .single()
+      if (error) {
+        setSaveError(error.message)
+        return
+      }
       if (created) onSaved(created)
     }
   }
@@ -167,6 +184,17 @@ export function SceneForm({ scene, storyId, onSaved, onDeleted }: SceneFormProps
           {...register('required_keywords_raw')}
         />
       </div>
+
+      {saveError && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          Erreur : {saveError}
+        </p>
+      )}
+      {saveSuccess && (
+        <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+          Scène enregistrée.
+        </p>
+      )}
 
       <Button type="submit" loading={isSubmitting} disabled={!isDirty && !!scene}>
         {scene ? 'Enregistrer' : 'Créer la scène'}
